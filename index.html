@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Promedio y Nota Necesaria</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
+        label, input { display: block; margin-bottom: 10px; }
+        input[type="number"] { width: 100px; }
+        header, footer { text-align: center; padding: 10px 0; background-color: #333; color: white; }
+        footer { font-size: 0.9em; }
+        .dark-theme { background-color: #333; color: white; }
+        .light-theme { background-color: #fff; color: black; }
+        select { margin: 10px 0; }
+    </style>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+    <header>
+        <h1>CalcuMate</h1>
+        <button id="cambiar-tema" onclick="toggleTheme()">☀️</button>
+    </header>
+
+    <main>
+        <label for="totalNotas">¿Cuántas notas hay en total en la materia?</label>
+        <input type="number" id="totalNotas" min="1" max="10" value="" onchange="cargarNotas()">
+
+        <label for="notas">¿Cuántas notas tienes actualmente?</label>
+        <input type="number" id="notas" min="1" max="10" value="" onchange="cargarNotas()">
+
+        <h3>Notas y ponderaciones</h3>
+        <div id="notasDiv">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nota</th>
+                        <th>Ponderación (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Aquí se generarán las filas de notas y ponderaciones -->
+                </tbody>
+            </table>
+        </div>
+
+        <label for="promedioMinimo">Ingrese el promedio mínimo para aprobar:</label>
+        <input type="number" id="promedioMinimo" placeholder="Ej: 40">
+
+        <label for="pesoExamen">Ingrese el peso del examen final (%):</label>
+        <input type="number" id="pesoExamen" placeholder="Ej: 30">
+
+        <button id="calcular" onclick="calcular()">Calcular</button>
+
+        <h3>Resultados:</h3>
+        <p id="promedioActual">Promedio actual: -</p>
+        <p id="notaNecesariaProxima">Nota necesaria en la próxima evaluación para evitar el examen: -</p>
+        <p id="notaExamenFinal">Nota necesaria en el examen final para aprobar: -</p>
+
+        <h3>Escenarios con diferentes porcentajes del examen final:</h3>
+        <p id="escenarios"></p>
+    </main>
+
+    <footer>
+        <p>© 2024 Calculadora de Promedio</p>
+    </footer>
+
+    <script>
+        // Función para cargar los campos de notas y ponderaciones según la cantidad de notas
+        function cargarNotas() {
+            const totalNotas = parseInt(document.getElementById('totalNotas').value);
+            const notas = parseInt(document.getElementById('notas').value);
+            const notasDiv = document.getElementById('notasDiv');
+            const tabla = notasDiv.querySelector('table tbody');
+            tabla.innerHTML = ''; 
+
+            // Generar las filas para las notas ingresadas y faltantes
+            for (let i = 1; i <= totalNotas; i++) {
+                const fila = document.createElement('tr');
+
+                // Columna de Nota
+                const celdaNota = document.createElement('td');
+                const inputNota = document.createElement('input');
+                inputNota.type = 'number';
+                inputNota.id = `nota${i}`;
+                if (i <= notas) {
+                    inputNota.value = '';  // Las notas ingresadas pueden estar vacías
+                } else {
+                    inputNota.placeholder = 'Ej: 5.5';  // Las notas faltantes tienen un placeholder
+                }
+                celdaNota.appendChild(inputNota);
+                fila.appendChild(celdaNota);
+
+                // Columna de Ponderación
+                const celdaPonderacion = document.createElement('td');
+                const inputPonderacion = document.createElement('input');
+                inputPonderacion.type = 'number';
+                inputPonderacion.id = `ponderacion${i}`;
+                inputPonderacion.value = '';  // Las ponderaciones son ingresadas por el usuario
+                celdaPonderacion.appendChild(inputPonderacion);
+                fila.appendChild(celdaPonderacion);
+
+                // Agregar la fila a la tabla
+                tabla.appendChild(fila);
+            }
+        }
+
+        // Función para calcular todo
+        function calcular() {
+            const totalNotas = parseInt(document.getElementById('totalNotas').value);
+            const notas = parseInt(document.getElementById('notas').value);
+            const promedioMinimo = parseFloat(document.getElementById('promedioMinimo').value);
+            const pesoExamen = parseFloat(document.getElementById('pesoExamen').value) / 100;
+            
+            let promedioActual = 0;
+            let ponderacionTotal = 0;
+
+            // Obtener las notas y ponderaciones
+            for (let i = 1; i <= totalNotas; i++) {
+                const nota = parseFloat(document.getElementById(`nota${i}`).value);
+                const ponderacion = parseFloat(document.getElementById(`ponderacion${i}`).value) / 100;
+
+                if (!isNaN(nota) && !isNaN(ponderacion)) {
+                    promedioActual += (nota * ponderacion);
+                    ponderacionTotal += ponderacion;
+                }
+            }
+
+            // Calcular el promedio actual ponderado
+            promedioActual = promedioActual / ponderacionTotal;
+            document.getElementById('promedioActual').textContent = "Promedio actual: " + promedioActual.toFixed(2);
+
+            // Calcular la nota necesaria en la próxima evaluación para evitar el examen
+            let notaNecesariaProxima = 0;
+            if (notas < totalNotas) {
+                const ponderacionFaltante = 1 - ponderacionTotal;
+                notaNecesariaProxima = (promedioMinimo - (promedioActual * ponderacionTotal)) / ponderacionFaltante;
+                document.getElementById('notaNecesariaProxima').textContent = "Nota necesaria en la próxima evaluación para evitar el examen: " + notaNecesariaProxima.toFixed(2);
+            } else {
+                document.getElementById('notaNecesariaProxima').textContent = "Nota necesaria en la próxima evaluación para evitar el examen: -";
+            }
+
+            // Calcular la nota necesaria en el examen final
+            let notaExamenFinal = 0;
+            if (pesoExamen > 0) {
+                notaExamenFinal = (promedioMinimo - (promedioActual * (1 - pesoExamen))) / pesoExamen;
+                document.getElementById('notaExamenFinal').textContent = "Nota necesaria en el examen final para aprobar: " + notaExamenFinal.toFixed(2);
+            }
+
+            // Calcular escenarios con diferentes porcentajes del examen final
+            let escenarios = '';
+            for (let i = 5; i <= 95; i += 5) {
+                let notaEscenario = (promedioMinimo - (promedioActual * (1 - i / 100))) / (i / 100);
+                escenarios += `Con ${i}% en el examen, necesitas una nota de ${notaEscenario.toFixed(2)} en el examen final para aprobar.<br><br>`;
+            }
+            document.getElementById('escenarios').innerHTML = escenarios;
+        }
+
+        // Función para cambiar el tema
+        function changeTheme() {
+            const theme = document.getElementById('theme').value;
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+            } else {
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+            }
+        }
+
+        // Función para alternar entre tema claro y oscuro
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+
+        // Cargar los formularios de notas cuando se cargue la página
+        window.onload = cargarNotas;
+    </script>
+
+</body>
+</html>
